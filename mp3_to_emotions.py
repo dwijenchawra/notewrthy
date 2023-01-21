@@ -40,6 +40,6 @@ def get_polarity(text):
     top_emotion = max(emotions, key=lambda key: emotions[key])
     if "love" in text:
         top_emotion = "love"
-    return get_polarity
+    return top_emotion
 
 get_polarity(transcript)

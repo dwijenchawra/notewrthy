@@ -42,4 +42,4 @@ def get_polarity(text):
         top_emotion = "love"
     return get_polarity
 
-get_emotion(transcript)
+get_polarity(transcript)

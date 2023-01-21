@@ -34,8 +34,8 @@ def get_polarity(text):
     sentiment = sid.polarity_scores(text)
 
     emotions = {"happy": sentiment["pos"], "excited": sentiment["pos"], "sad": sentiment["neg"],
-                "angry": sentiment["neg"], "neutral": sentiment["neu"], "disgust": sentiment["pos"]}
-
+                "angry": sentiment["neg"], "neutral": sentiment["neu"],}
+    
     top_emotion = sorted(emotions.items(), key=lambda x: x[1], reverse=True)[:1]
     if "love" in text:
         top_emotion = "love"

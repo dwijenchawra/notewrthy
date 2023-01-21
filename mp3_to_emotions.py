@@ -27,16 +27,17 @@ response = client.recognize(
 for result in response.results:
     transcript = "{}".format(result.alternatives[0].transcript)
 
-
 def get_polarity(text):
     nltk.download('vader_lexicon')
     sid = SentimentIntensityAnalyzer()
     sentiment = sid.polarity_scores(text)
 
-    emotions = {"happy": sentiment["pos"], "excited": sentiment["pos"], "sad": sentiment["neg"],
-                "angry": sentiment["neg"], "neutral": sentiment["neu"],}
-    
-    top_emotion = sorted(emotions.items(), key=lambda x: x[1], reverse=True)[:1]
+    angry_words = ["angry", "mad", "irritated", "frustrated", "annoyed"]
+    for word in angry_words:
+        if word in text:
+            return "angry"
+    emotions = {"happy": sentiment["pos"], "excited": sentiment["pos"], "sad": sentiment["neg"], "love": sentiment["pos"]}
+    top_emotion = max(emotions, key=lambda key: emotions[key])
     if "love" in text:
         top_emotion = "love"
     return top_emotion

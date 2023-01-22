@@ -1,12 +1,15 @@
 import os
 import time
 import psycopg2
-from flask import Flask, request, jsonify, render_template, redirect
+from flask import Flask, request, jsonify, render_template, redirect, session
+from flask_session import Session
 from pydub import AudioSegment
 from google.cloud import speech
 import nltk
 from cryptography.fernet import Fernet
 from nltk.sentiment import SentimentIntensityAnalyzer
+import spotipy
+from spotipy import SpotifyClientCredentials, SpotifyOAuth 
 import dotenv
 
 from spotify.test import SpotifyClient
@@ -16,18 +19,45 @@ dotenv.load_dotenv()
 
 conn = psycopg2.connect(os.getenv("DATABASE_URL"), sslmode='require')
 app = Flask(__name__)
+app.config.update(SECRET_KEY=os.urandom(24))
+Session(app)
 
 # @app.route('/')
 # def index():
 #     response = startup.getUser()
 #     return redirect(response)
 
-@app.route('/callback/')
-def callback():
-    test = SpotifyClient()
-    return render_template("http://localhost:5000/callback/")
+def create_spotify_oauth():
+    return SpotifyOAuth(
+        client_id=os.getenv("SPOTIFY_CLIENT_ID"),
+        client_secret=os.getenv("SPOTIFY_CLIENT_SECRET"),
+        redirect_uri=os.getenv("SPOTIFY_REDIRECT_URI"),
+        scope="user-read-recently-played user-library-read playlist-modify-private playlist-modify-public user-library-read user-library-modify user-top-read user-read-currently-playing user-read-playback-state user-modify-playback-state",
+        cache_path=os.getenv("SPOTIFY_CACHE_PATH"),
+    )
+
+# @app.route('/')
+# def callback():
+#     sp_oauth = create_spotify_oauth()
+#     return redirect("http://192.168.1.147:5000/callback")
+
+#     code = request.args.get('code')
+#     token_info = sp_oauth.get_access_token(code)
+#     session["token_info"] = token_info
 
 
+#     print(test.authobj.get_authorize_url())
+    
+#     return redirect(test.authobj.get_authorize_url())
+
+# @app.route('/callback')
+# def authorize():
+#     sp_oauth = create_spotify_oauth()
+#     session.clear()
+#     code = request.args.get('code')
+#     token_info = sp_oauth.get_access_token(code)
+#     session["token_info"] = token_info
+#     return redirect(test.authobj.get_authorize_url())
 
 
 @app.route("/create_playlist")
@@ -36,10 +66,28 @@ def create_playlist():
 
 @app.route("/sign_up", methods=["POST"])
 def sign_up():
-    with open("../aes-128.key") as f:
-        line = f.readline()
-    print(line)
-    return jsonify("success")
+    username = request.json['username']
+    password = request.json['password']
+    key = ""
+    with open("secret.txt") as f:
+        key = f.readline()
+    fern = Fernet(key)
+    password = fern.encrypt(password.encode()).decode("utf-8").strip("'")
+    with conn.cursor() as cur:
+        cur.execute("SELECT username, password FROM users")
+        res = cur.fetchall()
+        g = 1
+        for user in res:
+            if user[0] == username:
+                g = 0
+                if user[1] == password:
+                    return jsonify("user_login")
+                else:
+                    return jsonify("incorrect_pass")
+        if g == 1:
+            cur.execute(f"INSERT INTO users (username, password) VALUES ('{username}', '{password}')")
+            conn.commit()
+            return jsonify("user_created")
     
 
 def get_polarity(text):
@@ -90,6 +138,7 @@ def analyze_audio():
         transcript = "{}".format(result.alternatives[0].transcript)
     emotion  = get_polarity(transcript)
     return {"emotion": emotion, "text": transcript}
+
 
 
 if __name__ == "__main__":
@@ -146,4 +195,4 @@ if __name__ == "__main__":
     # decMessage = fernet.decrypt(encMessage).decode()
     
     # print("decrypted string: ", decMessage)
-    app.run(host="0.0.0.0", debug=True)
+    app.run(host="0.0.0.0", debug=True, threaded=True)

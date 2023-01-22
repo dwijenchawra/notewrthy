@@ -68,16 +68,22 @@ class SpotifyClient:
             client_id=os.getenv("SPOTIFY_CLIENT_ID"),
             client_secret=os.getenv("SPOTIFY_CLIENT_SECRET"),
         )
-        self.client = spotipy.Spotify(
-            client_credentials_manager=client_credentials_manager,
-            auth_manager=SpotifyOAuth(
+
+        print("initializing client auth")
+
+        self.authobj = SpotifyOAuth(
                 client_id=os.getenv("SPOTIFY_CLIENT_ID"),
                 client_secret=os.getenv("SPOTIFY_CLIENT_SECRET"),
                 redirect_uri=os.getenv("SPOTIFY_REDIRECT_URI"),
                 scope="user-read-recently-played user-library-read playlist-modify-private playlist-modify-public user-library-read user-library-modify user-top-read user-read-currently-playing user-read-playback-state user-modify-playback-state",
                 cache_path=os.getenv("SPOTIFY_CACHE_PATH"),
-            ),
+            )
+        
+        self.client = spotipy.Spotify(
+            client_credentials_manager=client_credentials_manager,
+            auth_manager=self.authobj,
         )
+        print("client auth initialized FINISHED")
 
     def get_current_user(self):
         return self.client.current_user()

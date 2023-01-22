@@ -1,4 +1,5 @@
 import os
+from time import time
 import psycopg2
 from flask import Flask, request, jsonify
 from pydub import AudioSegment
@@ -77,6 +78,9 @@ if __name__ == "__main__":
     with conn.cursor() as cur:
  
         # cur.execute("CREATE TABLE preferences (user_id UUID, top5Genres STRING[], top5Artists STRING[], top5Songs STRING[], );")
+
+        # make user_id in preferences a unique key
+        cur.execute("ALTER TABLE preferences ADD CONSTRAINT user_id UNIQUE (user_id);")
 
         cur.execute("CREATE TABLE songs (song_id STRING, song_data JSONB, valence FLOAT, energy FLOAT, danceability FLOAT, tempo FLOAT, mode FLOAT, acousticness FLOAT, instrumentalness FLOAT, loudness FLOAT, preferences_id UUID, FOREIGN KEY (preferences_id) REFERENCES preferences(user_id));")
         # make valence, energy, danceability, tempo, mode, acousticness, instrumentalness, loudness indexes

@@ -173,7 +173,8 @@ class SpotifyClient:
             return None
 
 
-# test = SpotifyClient()
+test = SpotifyClient()
+print("init")
 # print(test.get_current_user()["display_name"])
 # print("-----------------------")
 # for item in test.get_current_user_recently_played()["items"]:
@@ -191,5 +192,5 @@ class SpotifyClient:
 
 # print("-----------------------")
 
-# pprint(test.recommend_song("love"))
+pprint(test.recommend_song("love"))
 

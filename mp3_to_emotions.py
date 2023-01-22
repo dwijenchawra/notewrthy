@@ -39,7 +39,7 @@ def get_polarity(text):
     emotions = {"happy": sentiment["pos"], "excited": sentiment["pos"], "sad": sentiment["neg"], "love": sentiment["pos"]}
     top_emotion = max(emotions, key=lambda key: emotions[key])
     if "love" in text:
-        top_emotion = "love"
+        top_emotion = "in love"
     return top_emotion
 
 get_polarity(transcript)

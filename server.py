@@ -86,7 +86,23 @@ def analyze_audio():
 if __name__ == "__main__":
     # creating the table
     with conn.cursor() as cur:
-        cur.execute("CREATE TABLE preferences (user_id UUID, top5Genres STRING[], top5Artists STRING[], top5Songs STRING[]);")
+ 
+        # cur.execute("CREATE TABLE preferences (user_id UUID, top5Genres STRING[], top5Artists STRING[], top5Songs STRING[], );")
+
+        cur.execute("CREATE TABLE users (song_id STRING, song_data JSONB, valence FLOAT, energy FLOAT, danceability FLOAT, tempo FLOAT, mode FLOAT, acousticness FLOAT, instrumentalness FLOAT, loudness FLOAT, preferences_id UUID, FOREIGN KEY (preferences_id) REFERENCES preferences(user_id));")
+
+        # make valence, energy, danceability, tempo, mode, acousticness, instrumentalness, loudness indexes
+        cur.execute("CREATE INDEX valence_index ON users (valence);")
+        cur.execute("CREATE INDEX energy_index ON users (energy);")
+        cur.execute("CREATE INDEX danceability_index ON users (danceability);")
+        cur.execute("CREATE INDEX tempo_index ON users (tempo);")
+        cur.execute("CREATE INDEX mode_index ON users (mode);")
+        cur.execute("CREATE INDEX acousticness_index ON users (acousticness);")
+        cur.execute("CREATE INDEX instrumentalness_index ON users (instrumentalness);")
+        cur.execute("CREATE INDEX loudness_index ON users (loudness);")
+
+
+
         conn.commit()
         cur.execute("SHOW TABLES;")
         res = cur.fetchall()

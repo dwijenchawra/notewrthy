@@ -5,6 +5,7 @@ import spotipy
 from pprint import pprint
 
 from dotenv import load_dotenv
+from tqdm import tqdm
 import os
 
 load_dotenv()
@@ -98,46 +99,14 @@ class SpotifyClient:
 
     def recommend_song(self, emotion):
         user_id = self.get_current_user()["id"]
-        if emotion == "happy":
-            valence = 0.8
-            energy = 0.6
-            danceability = 0.8
-            tempo = 120
-        elif emotion == "sad":
-            valence = 0.2
-            energy = 0.4
-            danceability = 0.4
-            tempo = 80
-        elif emotion == "love":
-            valence = 0.7
-            energy = 0.5
-            danceability = 0.7
-            tempo = 100
-        elif emotion == "excited":
-            valence = 0.7
-            energy = 0.7
-            danceability = 0.8
-            tempo = 140
-        elif emotion == "angry":
-            valence = 0.4
-            energy = 0.8
-            danceability = 0.6
-            tempo = 140
-        else:
-            print("Invalid emotion")
-            return
 
         # results = self.get_current_user_saved_tracks()
         results = self.client.current_user_saved_tracks(limit=50, offset=1000)
         temp = results["items"]
 
-        # count = 0
-        # while results['next']:
-        #     results = self.client.next(results)
-        #     temp.extend(results['items'])
-        #     count += 1
-        #     if count == 1:
-        #         break
+        while results['next']:
+            results = self.client.next(results)
+            temp.extend(results['items'])
 
         tracks = []
         for item in temp:
@@ -145,58 +114,47 @@ class SpotifyClient:
 
         print(len(tracks))
 
-        features = self.client.audio_features(tracks)
+        # get features in batches of 50
+        features = []
+        for i in tqdm(range(0, len(tracks), 50)):
+            features.extend(self.client.audio_features(tracks[i : i + 50]))
+
+
         trackdict = {tracks[i]: features[i] for i in range(len(tracks))}
 
         print(len(features))
 
         recommended_tracks = {}
 
-        for element in trackdict.keys():
+        for element in tqdm(trackdict.keys()):
             trackfeatures = trackdict[element]
-            if emotion == "happy":
-                if (
-                    trackfeatures["valence"] > valence
-                    and trackfeatures["energy"] > energy
-                    and trackfeatures["danceability"] > danceability
-                    and trackfeatures["tempo"] > tempo
-                ):
-                    recommended_tracks[element] = trackfeatures
+            currentvector = None
+
+            if emotion == "love":
+                currentvector = love
+            elif emotion == "happy":
+                currentvector = happy
             elif emotion == "sad":
-                if (
-                    trackfeatures["valence"] < valence
-                    and trackfeatures["energy"] < energy
-                    and trackfeatures["danceability"] < danceability
-                    and trackfeatures["tempo"] < tempo
-                ):
-                    recommended_tracks[element] = trackfeatures
-            elif emotion == "love":
-                if (
-                    trackfeatures["valence"] > valence
-                    and trackfeatures["energy"] < energy
-                    and trackfeatures["danceability"] > danceability
-                    and trackfeatures["tempo"] < tempo
-                ):
-                    recommended_tracks[element] = trackfeatures
-            elif emotion == "excited":
-                if (
-                    trackfeatures["valence"] > valence
-                    and trackfeatures["energy"] > energy
-                    and trackfeatures["danceability"] > danceability
-                    and trackfeatures["tempo"] > tempo
-                ):
-                    recommended_tracks[element] = trackfeatures
+                currentvector = sad
             elif emotion == "angry":
-                if (
-                    trackfeatures["valence"] < valence
-                    and trackfeatures["energy"] > energy
-                    and trackfeatures["danceability"] < danceability
-                    and trackfeatures["tempo"] > tempo
-                ):
-                    recommended_tracks[element] = trackfeatures
-            else:
-                print("Invalid emotion")
-                return
+                currentvector = angry
+            elif emotion == "excited":
+                currentvector = excited
+
+            # get distance to current vector
+            distance = 0
+            for i in range(0, 8):
+                distance += (trackfeatures[i] - currentvector[i]) ** 2
+            distance = distance ** 0.5
+
+            # add to recommended tracks
+            recommended_tracks[element] = distance
+            
+
+
+                
+            
+
         if recommended_tracks:
             # return 5 recommended songs
             tracks_with_names = {}

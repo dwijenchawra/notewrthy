@@ -25,6 +25,7 @@ app.secret_key = b'_5#y2L"F4Q8z\n\xec]/'
 app.config['SESSION_TYPE'] = 'filesystem'
 
 app.config["CACHE_TYPE"] = "FileSystemCache" # better not use this type w. gunicorn
+app.config["CACHE_DIR"] = "cache"
 cache = Cache(app)
 
 
@@ -37,6 +38,9 @@ Session(app)
 
 @app.route('/callback')
 def index():
+
+    print(cache.get("username"))
+
     cache_handler = spotipy.cache_handler.FlaskSessionCacheHandler(session)
     auth_manager = SpotifyOAuth(
                 client_id=os.getenv("SPOTIFY_CLIENT_ID"),
@@ -44,7 +48,7 @@ def index():
                 redirect_uri=os.getenv("SPOTIFY_REDIRECT_URI"),
                 scope="user-read-recently-played user-library-read playlist-modify-private playlist-modify-public user-library-read user-library-modify user-top-read user-read-currently-playing user-read-playback-state user-modify-playback-state",
                 cache_path=os.getenv("SPOTIFY_CACHE_PATH"),
-                cache_handler=CacheFileHandler(username=session.get("username")),
+                cache_handler=CacheFileHandler(username=cache.get("username")),
                 show_dialog=True    
             )
 
@@ -100,6 +104,8 @@ def create_playlist():
 def sign_up():
     username = request.json['username']
     password = request.json['password']
+    print(username)
+    print(password)
     key = ""
     with open("secret.txt") as f:
         key = f.readline()
@@ -110,16 +116,22 @@ def sign_up():
         res = cur.fetchall()
         g = 1
         for user in res:
+            print(user)
             if user[0] == username:
                 g = 0
-                if user[1] == password:
-                    
+                print(fern.encrypt(user[1].encode()).decode("utf-8").strip("'"))
+                print(password)
+                print(fern.decrypt(password).decode("utf-8"))
+                if user[1] == fern.decrypt(password).decode("utf-8"):
+                    cache.set("username", username)
                     return jsonify("user_login")
                 else:
                     return jsonify("incorrect_pass")
         if g == 1:
             cur.execute(f"INSERT INTO users (username, password) VALUES ('{username}', '{password}')")
             conn.commit()
+
+            cache.set("username", username)
             return jsonify("user_created")
     
 

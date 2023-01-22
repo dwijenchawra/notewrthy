@@ -27,37 +27,44 @@ Session(app)
 #     response = startup.getUser()
 #     return redirect(response)
 
-def create_spotify_oauth():
-    return SpotifyOAuth(
-        client_id=os.getenv("SPOTIFY_CLIENT_ID"),
-        client_secret=os.getenv("SPOTIFY_CLIENT_SECRET"),
-        redirect_uri=os.getenv("SPOTIFY_REDIRECT_URI"),
-        scope="user-read-recently-played user-library-read playlist-modify-private playlist-modify-public user-library-read user-library-modify user-top-read user-read-currently-playing user-read-playback-state user-modify-playback-state",
-        cache_path=os.getenv("SPOTIFY_CACHE_PATH"),
-    )
+@app.route('/callback')
+def index():
+    cache_handler = spotipy.cache_handler.FlaskSessionCacheHandler(session)
+    auth_manager = SpotifyOAuth(
+                client_id=os.getenv("SPOTIFY_CLIENT_ID"),
+                client_secret=os.getenv("SPOTIFY_CLIENT_SECRET"),
+                redirect_uri=os.getenv("SPOTIFY_REDIRECT_URI"),
+                scope="user-read-recently-played user-library-read playlist-modify-private playlist-modify-public user-library-read user-library-modify user-top-read user-read-currently-playing user-read-playback-state user-modify-playback-state",
+                cache_path=os.getenv("SPOTIFY_CACHE_PATH"),
+                show_dialog=True
+            )
 
-# @app.route('/')
-# def callback():
-#     sp_oauth = create_spotify_oauth()
-#     return redirect("http://192.168.1.147:5000/callback")
+    if request.args.get("code"):
+        print("code")
+        # Step 2. Being redirected from Spotify auth page
+        auth_manager.get_access_token(request.args.get("code"))
+        return redirect('/callback')
 
-#     code = request.args.get('code')
-#     token_info = sp_oauth.get_access_token(code)
-#     session["token_info"] = token_info
+    if not auth_manager.validate_token(cache_handler.get_cached_token()):
+        print("not logged in")
+        # Step 1. Display sign in link when no token
+        auth_url = auth_manager.get_authorize_url()
+        return f'<h2><a href="{auth_url}">Sign in</a></h2>'
+
+    # Step 3. Signed in, display data
+    spotify = spotipy.Spotify(auth_manager=auth_manager)
+    return f'<h2>Hi {spotify.me()["display_name"]}, ' \
+           f'<small><a href="/sign_out">[sign out]<a/></small></h2>' \
+           f'<a href="/playlists">my playlists</a> | ' \
+           f'<a href="/currently_playing">currently playing</a> | ' \
+        f'<a href="/current_user">me</a>' \
+
+@app.route('/sign_out')
+def sign_out():
+    session.pop("token_info", None)
+    return redirect('/callback')
 
 
-#     print(test.authobj.get_authorize_url())
-    
-#     return redirect(test.authobj.get_authorize_url())
-
-# @app.route('/callback')
-# def authorize():
-#     sp_oauth = create_spotify_oauth()
-#     session.clear()
-#     code = request.args.get('code')
-#     token_info = sp_oauth.get_access_token(code)
-#     session["token_info"] = token_info
-#     return redirect(test.authobj.get_authorize_url())
 
 
 @app.route("/create_playlist")

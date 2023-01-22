@@ -2,6 +2,8 @@ import os
 import time
 import psycopg2
 from flask import Flask, request, jsonify, render_template, redirect, session
+from flask_caching import Cache
+
 from flask_session import Session
 from pydub import AudioSegment
 from google.cloud import speech
@@ -9,17 +11,23 @@ import nltk
 from cryptography.fernet import Fernet
 from nltk.sentiment import SentimentIntensityAnalyzer
 import spotipy
-from spotipy import SpotifyClientCredentials, SpotifyOAuth 
+from spotipy import SpotifyClientCredentials, SpotifyOAuth, CacheFileHandler
 import dotenv
 
-from spotify.test import SpotifyClient
 
 
 dotenv.load_dotenv()
 
 conn = psycopg2.connect(os.getenv("DATABASE_URL"), sslmode='require')
+
 app = Flask(__name__)
-app.config.update(SECRET_KEY=os.urandom(24))
+app.secret_key = b'_5#y2L"F4Q8z\n\xec]/'
+app.config['SESSION_TYPE'] = 'filesystem'
+
+app.config["CACHE_TYPE"] = "FileSystemCache" # better not use this type w. gunicorn
+cache = Cache(app)
+
+
 Session(app)
 
 # @app.route('/')
@@ -36,13 +44,16 @@ def index():
                 redirect_uri=os.getenv("SPOTIFY_REDIRECT_URI"),
                 scope="user-read-recently-played user-library-read playlist-modify-private playlist-modify-public user-library-read user-library-modify user-top-read user-read-currently-playing user-read-playback-state user-modify-playback-state",
                 cache_path=os.getenv("SPOTIFY_CACHE_PATH"),
-                show_dialog=True
+                cache_handler=CacheFileHandler(username=session.get("username")),
+                show_dialog=True    
             )
 
     if request.args.get("code"):
         print("code")
+        auth_manager.get_cached_token()
         # Step 2. Being redirected from Spotify auth page
         auth_manager.get_access_token(request.args.get("code"))
+        cache_handler.save_token_to_cache(auth_manager.get_cached_token())
         return redirect('/callback')
 
     if not auth_manager.validate_token(cache_handler.get_cached_token()):
@@ -64,7 +75,21 @@ def sign_out():
     session.pop("token_info", None)
     return redirect('/callback')
 
+@app.route('/test')
+def test():
+    return "hello"
 
+
+
+@app.route('/playlists')
+def playlists():
+    cache_handler = spotipy.cache_handler.FlaskSessionCacheHandler(session)
+    auth_manager = spotipy.oauth2.SpotifyOAuth(cache_handler=cache_handler)
+    if not auth_manager.validate_token(cache_handler.get_cached_token()):
+        return redirect('/')
+
+    spotify = spotipy.Spotify(auth_manager=auth_manager)
+    return spotify.current_user_playlists()
 
 
 @app.route("/create_playlist")
@@ -88,6 +113,7 @@ def sign_up():
             if user[0] == username:
                 g = 0
                 if user[1] == password:
+                    
                     return jsonify("user_login")
                 else:
                     return jsonify("incorrect_pass")
@@ -202,4 +228,6 @@ if __name__ == "__main__":
     # decMessage = fernet.decrypt(encMessage).decode()
     
     # print("decrypted string: ", decMessage)
+    app.secret_key = os.urandom(24)
+    app.config['SESSION_TYPE'] = 'filesystem'
     app.run(host="0.0.0.0", debug=True, threaded=True)

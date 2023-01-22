@@ -7,3 +7,5 @@ Flask-Spotify-Auth/
 aes-128.key
 ccloud
 secret.txt
+*.wav
+*.mp3

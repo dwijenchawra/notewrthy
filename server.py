@@ -41,7 +41,7 @@ def index():
 
     print(cache.get("username"))
 
-    cache_handler = spotipy.cache_handler.FlaskSessionCacheHandler(session)
+    cache_handler = CacheFileHandler(username=cache.get("username"))
     auth_manager = SpotifyOAuth(
                 client_id=os.getenv("SPOTIFY_CLIENT_ID"),
                 client_secret=os.getenv("SPOTIFY_CLIENT_SECRET"),
@@ -87,13 +87,13 @@ def test():
 
 @app.route('/playlists')
 def playlists():
-    cache_handler = spotipy.cache_handler.FlaskSessionCacheHandler(session)
+    cache_handler = CacheFileHandler(username=cache.get("username"))
     auth_manager = spotipy.oauth2.SpotifyOAuth(cache_handler=cache_handler)
     if not auth_manager.validate_token(cache_handler.get_cached_token()):
         return redirect('/')
 
     spotify = spotipy.Spotify(auth_manager=auth_manager)
-    return spotify.current_user_playlists()
+    return jsonify(spotify.current_user_playlists())
 
 
 @app.route("/create_playlist")

@@ -1,5 +1,4 @@
 import os
-import time
 import psycopg2
 from flask import Flask, request, jsonify
 from pydub import AudioSegment
@@ -18,20 +17,9 @@ def create_playlist():
 def index():
     return {"owijefw": "owiefj"}
 
-@app.route("/sign_in")
-def sign_in():
-    pass
-
-@app.route("/sign_up")
+@app.route("/sign_up", methods=["POST"])
 def sign_up():
-    # check if that username already exists
-    # if it does, return an error message of "user already exists"
-    # if it doesn't, create the new user and return a message of "user created"
-    with conn.cursor() as cur:
-        cur.execute("")
-        res = cur.fetchall()
-        conn.commit()
-        print(res)
+    return jsonify("success")
     
 
 def get_polarity(text):
@@ -90,8 +78,7 @@ if __name__ == "__main__":
  
         # cur.execute("CREATE TABLE preferences (user_id UUID, top5Genres STRING[], top5Artists STRING[], top5Songs STRING[], );")
 
-        cur.execute("CREATE TABLE users (song_id STRING, song_data JSONB, valence FLOAT, energy FLOAT, danceability FLOAT, tempo FLOAT, mode FLOAT, acousticness FLOAT, instrumentalness FLOAT, loudness FLOAT, preferences_id UUID, FOREIGN KEY (preferences_id) REFERENCES preferences(user_id));")
-
+        cur.execute("CREATE TABLE songs (song_id STRING, song_data JSONB, valence FLOAT, energy FLOAT, danceability FLOAT, tempo FLOAT, mode FLOAT, acousticness FLOAT, instrumentalness FLOAT, loudness FLOAT, preferences_id UUID, FOREIGN KEY (preferences_id) REFERENCES preferences(user_id));")
         # make valence, energy, danceability, tempo, mode, acousticness, instrumentalness, loudness indexes
         cur.execute("CREATE INDEX valence_index ON users (valence);")
         time.sleep(2)

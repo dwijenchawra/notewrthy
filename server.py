@@ -1,4 +1,5 @@
 import os
+import time
 import psycopg2
 from flask import Flask, request, jsonify
 from pydub import AudioSegment
@@ -93,13 +94,21 @@ if __name__ == "__main__":
 
         # make valence, energy, danceability, tempo, mode, acousticness, instrumentalness, loudness indexes
         cur.execute("CREATE INDEX valence_index ON users (valence);")
+        time.sleep(2)
         cur.execute("CREATE INDEX energy_index ON users (energy);")
+        time.sleep(2)
         cur.execute("CREATE INDEX danceability_index ON users (danceability);")
+        time.sleep(2)
         cur.execute("CREATE INDEX tempo_index ON users (tempo);")
+        time.sleep(2)
         cur.execute("CREATE INDEX mode_index ON users (mode);")
+        time.sleep(2)
         cur.execute("CREATE INDEX acousticness_index ON users (acousticness);")
+        time.sleep(2)
         cur.execute("CREATE INDEX instrumentalness_index ON users (instrumentalness);")
+        time.sleep(2)
         cur.execute("CREATE INDEX loudness_index ON users (loudness);")
+        time.sleep(2)
 
 
 

@@ -2,3 +2,8 @@ spotify/.cache
 .cache
 spotify/.env
 key.json
+Flask-Spotify-Auth/
+.env
+aes-128.key
+ccloud
+secret.txt

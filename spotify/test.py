@@ -74,7 +74,7 @@ class SpotifyClient:
                 client_id=os.getenv("SPOTIFY_CLIENT_ID"),
                 client_secret=os.getenv("SPOTIFY_CLIENT_SECRET"),
                 redirect_uri=os.getenv("SPOTIFY_REDIRECT_URI"),
-                scope="user-read-recently-played user-library-read playlist-modify-private playlist-modify-public user-library-read user-library-modify user-top-read user-read-currently-playing",
+                scope="user-read-recently-played user-library-read playlist-modify-private playlist-modify-public user-library-read user-library-modify user-top-read user-read-currently-playing user-read-playback-state user-modify-playback-state",
                 cache_path=os.getenv("SPOTIFY_CACHE_PATH"),
             ),
         )
@@ -167,23 +167,23 @@ class SpotifyClient:
             return None
 
 
-test = SpotifyClient()
-print(test.get_current_user()["display_name"])
-print("-----------------------")
-for item in test.get_current_user_recently_played()["items"]:
-    print(item["track"]["name"])
-print("-----------------------")
-for item in test.get_current_user_top_tracks()["items"]:
-    print(item["name"])
-print("-----------------------")
-for item in test.get_current_user_top_artists()["items"]:
-    print(item["name"])
-print("-----------------------")
+# test = SpotifyClient()
+# print(test.get_current_user()["display_name"])
+# print("-----------------------")
+# for item in test.get_current_user_recently_played()["items"]:
+#     print(item["track"]["name"])
+# print("-----------------------")
+# for item in test.get_current_user_top_tracks()["items"]:
+#     print(item["name"])
+# print("-----------------------")
+# for item in test.get_current_user_top_artists()["items"]:
+#     print(item["name"])
+# print("-----------------------")
 
-# for item in test.get_current_user_saved_tracks()['items'][:5]:
-# print(item['track']['name'])
+# # for item in test.get_current_user_saved_tracks()['items'][:5]:
+# # print(item['track']['name'])
 
-print("-----------------------")
+# print("-----------------------")
 
-pprint(test.recommend_song("love"))
+# pprint(test.recommend_song("love"))
 

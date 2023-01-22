@@ -86,7 +86,9 @@ def analyze_audio():
 if __name__ == "__main__":
     # creating the table
     with conn.cursor() as cur:
-        cur.execute("SHOW SCHEMAS;")
+        cur.execute("CREATE TABLE preferences (user_id UUID, top5Genres STRING[], top5Artists STRING[], top5Songs STRING[]);")
+        conn.commit()
+        cur.execute("SHOW TABLES;")
         res = cur.fetchall()
         print(res)
     # app.run(host="0.0.0.0", debug=True)

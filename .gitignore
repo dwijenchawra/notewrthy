@@ -11,3 +11,4 @@ secret.txt
 *.mp3
 
 flask_session
+.cache-*

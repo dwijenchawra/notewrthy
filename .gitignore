@@ -1,3 +1,4 @@
 spotify/.cache
 .cache
 spotify/.env
+key.json

@@ -204,10 +204,10 @@ def sign_up():
                     return jsonify("incorrect_pass")
         if g == 1:
             cur.execute(f"INSERT INTO users (username, password) VALUES ('{username}', '{password}')")
-            cur.execute(f"SELECT user_id FROM users WHERE username='{username}'")
+            cur.execute(f"SELECT id FROM users WHERE username='{username}'")
             user_id = cur.fetchall()[0][0]
-            for user in res:
-                compare_music_taste(user[2], user_id)
+            # for user in res:
+                # compare_music_taste(user[2], user_id)
             conn.commit()
             cache.set("username", username)
             return jsonify("user_created")
@@ -327,12 +327,50 @@ def gettopemotion(emotion):
         user_id = cur.fetchall()[0][0]
 
         # select top 10 items from happydist column from songs table where preferences_id equals user_id 
-        cur.execute(f"SELECT song_id FROM songs WHERE preferences_id='{user_id}' ORDER BY {emotion} ASC LIMIT 10")
+        cur.execute(f"SELECT song_id FROM songs WHERE preferences_id='{user_id}' ORDER BY {emotion} ASC LIMIT 20")
         res = cur.fetchall()
+        names = []
         links = []
         for r in res:
-            links.append(client.track(r[0])["name"])
-        return jsonify(links)
+            names.append(client.track(r[0])["name"])
+            links.append("spotify:track:" + str(client.track(r[0])["id"]))
+
+        if emotion == "happydist":
+            emotion = "happy"
+        elif emotion == "sadist":
+            emotion = "sad"
+        elif emotion == "excitedist":
+            emotion = "excited"
+        elif emotion == "lovedist":
+            emotion = "love"
+        elif emotion == "angrydist":
+            emotion = "angry"
+
+        result = client.user_playlist_create(client.current_user()["id"], f"{emotion} playlist", public=False)
+        time.sleep(1)
+        # print(client.current_user_playlists(limit=1)["items"][0]["id"])
+
+        # results = client.current_user_playlists(limit=50)
+        # temp = results["items"]
+
+        # while results['next']:
+        #     results = client.next(results)
+        #     temp.extend(results['items'])
+
+
+
+        
+        client.playlist_add_items(result["id"], links, 0)
+        
+
+        # http://open.spotify.com/track/6rqhFgbbKwnb9MLmUQDhG6
+        url = "http://open.spotify.com/track/" + client.current_user_playlists()["items"][0]["external_urls"]["spotify"].split(":")[-1]
+        item = {
+            "url": url,
+            "names": names,
+        }
+        
+        return jsonify(item)
         
 
 
@@ -434,12 +472,12 @@ def loadtracksintodb():
             
             # upload all vector distances to database
             nullstring = "NULL"
-            print(happydist)
-            print(sadist)
-            print(angrydist)
-            print(excitedist)
-            print(lovedist)
-            # cur.execute(f"INSERT INTO songs (song_id, song_data, lovedist, happydist, sadist, angrydist, excitedist, preferences_id) VALUES ('{element}', {nullstring}, {lovedist}, {happydist}, {sadist}, {angrydist}, {excitedist}, '{user_id}');")
+            # print(happydist)
+            # print(sadist)
+            # print(angrydist)
+            # print(excitedist)
+            # print(lovedist)
+            cur.execute(f"INSERT INTO songs (song_id, song_data, lovedist, happydist, sadist, angrydist, excitedist, preferences_id) VALUES ('{element}', {nullstring}, {lovedist}, {happydist}, {sadist}, {angrydist}, {excitedist}, '{user_id}');")
 
         conn.commit()
 

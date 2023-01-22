@@ -9,3 +9,5 @@ ccloud
 secret.txt
 *.wav
 *.mp3
+
+flask_session

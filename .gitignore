@@ -1,5 +1,5 @@
 spotify/.cache
-.cache
+cache
 spotify/.env
 key.json
 Flask-Spotify-Auth/

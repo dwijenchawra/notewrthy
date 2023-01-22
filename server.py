@@ -6,6 +6,7 @@ from google.cloud import speech
 import nltk
 from nltk.sentiment import SentimentIntensityAnalyzer
 
+conn = psycopg2.connect(os.environ["DATABASE_URL"])
 app = Flask(__name__)
 
 @app.route("/create_playlist")
@@ -22,24 +23,30 @@ def sign_in():
 
 @app.route("/sign_up")
 def sign_up():
-    pass
+    # check if that username already exists
+    # if it does, return an error message of "user already exists"
+    # if it doesn't, create the new user and return a message of "user created"
+    with conn.cursor() as cur:
+        cur.execute("")
+        res = cur.fetchall()
+        conn.commit()
+        print(res)
+    
 
 def get_polarity(text):
     nltk.download('vader_lexicon')
     sid = SentimentIntensityAnalyzer()
     sentiment = sid.polarity_scores(text)
-    
-    emotions = {"happy": sentiment["pos"], "excited": sentiment["pos"], "sad": sentiment["neg"], 
-                "angry": sentiment["neg"], "neutral": sentiment["neu"], "love": sentiment["pos"], 
-                "stressed": sentiment["neg"]}
-    top_two_emotions = sorted(emotions.items(), key=lambda x: x[1], reverse=True)[:2]
-    return top_two_emotions
 
-def get_emotions(results):
-  emotions = ""
-  for i in results:
-    emotions += i[0] + " "
-  return emotions
+    angry_words = ["angry", "mad", "irritated", "frustrated", "annoyed"]
+    for word in angry_words:
+        if word in text:
+            return "angry"
+    emotions = {"happy": sentiment["pos"], "excited": sentiment["pos"], "sad": sentiment["neg"], "love": sentiment["pos"]}
+    top_emotion = max(emotions, key=lambda key: emotions[key])
+    if "love" in text:
+        top_emotion = "love"
+    return top_emotion
 
 @app.route("/analyze_audio", methods = ["POST"])
 def analyze_audio():
@@ -69,14 +76,17 @@ def analyze_audio():
         config = config,
         audio = audio_file
     )
-
+    transcript = ""
     for result in response.results:
         transcript = "{}".format(result.alternatives[0].transcript)
-    result  = get_polarity(transcript)
-    emotions = get_emotions(result)
-    
-    return {"emotions": emotions, "text": transcript}
+    emotion  = get_polarity(transcript)
+    return {"emotion": emotion, "text": transcript}
 
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", debug=True)
+    # creating the table
+    with conn.cursor() as cur:
+        cur.execute("SHOW SCHEMAS;")
+        res = cur.fetchall()
+        print(res)
+    # app.run(host="0.0.0.0", debug=True)

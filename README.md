@@ -1,3 +1,8 @@
+# Soundscape
+<img width="400" alt="image" src="https://user-images.githubusercontent.com/30065475/213947754-eb501b00-3d64-4aaa-8377-5990a23780b2.png">
+
+
+https://devpost.com/software/soundscape-aw09nf
 ## Inspiration
 Our inspiration for Soundscape came from our own experiences. We were tired of the limitations of traditional music streaming services, whose music recommendation system never catered to the moment. We wanted to create a platform to help music lovers like ourselves connect with others who shared similar tastes. At Soundscape, we strive to bring people together through the universal language of music and offer a unique way to discover new songs that express our moods.
 
